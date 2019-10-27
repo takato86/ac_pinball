@@ -43,13 +43,19 @@ class FourierBasis(TrivialBasis):
         self.low_ranges = ranges.low
         self.high_ranges = ranges.high
         iter = itertools.product(range(order+1), repeat=nvars)
-        self.multipliers = numpy.array([list(map(int,x)) for x in iter])
+        self.multipliers = numpy.array([list(map(int,x)) for x in iter]) # int[256][4]
 
     def __call__(self, features):
+        """
+        Arguments:
+            features {[type]} -- [description]
+        Returns:
+            int[nvars**nvars][nvars]
+        """
         if len(features) == 0:
             return numpy.ones((1,))
         basisFeatures = numpy.array([self.scale(features[i],i) for i in range(len(features))])
-        return numpy.cos(numpy.pi * numpy.dot(self.multipliers, basisFeatures))
+        return numpy.cos(numpy.pi * numpy.dot(self.multipliers, basisFeatures)) 
 
     def __len__(self):
         return self.numTerms
