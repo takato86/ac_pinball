@@ -7,27 +7,44 @@ import copy
 from scipy.special import expit, logsumexp
 import time
 
+from policy import SoftmaxPolicy
+
 np.random.seed(seed = 32)
 
 
 class Actor(object):
-    def __init__(self, n_actions, n_obs, n_features, lr_theta=0.001, temperature=1.0):
+    def __init__(self, rng, n_actions, n_obs, n_features, lr_theta=0.001, temperature=1.0):
         self.n_actions = n_actions
         self.n_features = n_features
-        self.theta = np.zeros((n_actions, self.n_features))
+        self.theta = np.zeros((self.n_features, n_actions))
         self.lr_theta = lr_theta
         self.temperature = temperature
-    
-    def update(self):
-        pass
-    
-    def act(self):
-        pass
-    
-    def get_action_dist(self, feature):
-        pass
-    
+        
+    def update(self, feat, action, q_value):
+        action_dist = self.pmf(feat)
+        action_dist = action_dist.reshape(1, len(action_dist))
+        feat = feat.reshape(1, len(feat))
+        grad = np.multiply(action_dist.T, feat) # 
+        grad[a] += feat
+        lr = self.lr/np.linalg.norm(feat)
+        self.theta += lr * q_value * grad
 
+    def act(self, feat):
+        return int(self.rng.choice(self.weights.shape[1], p=self.pmf(phi)))
+
+    def pmf(self, feat):
+        """
+        Returns: ndarray(#actions)
+        """
+        # TODO check
+        energy = self.value(self.theta, feat) # / self.temperature # >> (1, #actions)
+        return np.exp(energy - logsumexp(energy))
+    
+    def value(self, feat, action=None):
+        energy = np.dot(self.theta, feat)
+        if action is None:
+            return energy
+        return energy[action]
 
 
 class ActorCrticiAgent(object):
@@ -68,17 +85,10 @@ class ActorCrticiAgent(object):
         """
         pre_feat = self.fourier_basis(pre_obs)
         feat = self.fourier_basis(obs)
-        self._update_w_q_omega(pre_feat, pre_a, feat, r, done, pre_o, o)
-        self._update_w_q_u(pre_feat, pre_a, feat, r, done, pre_o)
-        q_omega = self._get_q_omega_list(feat)[o]
-        v_omega = self._get_v_omega(feat)
-        q_u_list = self._get_q_u_list(feat, o)
+        self.update_q_value(pre_feat, pre_a, feat, r, done, a)
+        self.actor.update(feat, action, )
         # TODO this is baseline version.
         # q_u_list -= q_omega
-
-        option = self.options[o]
-        option.update(a, pre_feat, feat, q_u_list, q_omega, v_omega) 
-
 
 class OptionCriticAgent(object):
     """
