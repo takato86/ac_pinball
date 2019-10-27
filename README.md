@@ -1,4 +1,4 @@
-# Option-Critic in pinball domain
+# Action-Critic in pinball domain
 ## Requires
 * python == 3.6+
 * gym
@@ -12,15 +12,15 @@
 ## How to run
 ```
 cd src
-python oc_agent.py
+python main.py
 ```
 
 ### With visualization
 ```
-python oc_agent.py --vis
+python main.py --vis
 ```
 
 ### Read Model files
 ```
-python oc_agent.py --model data/20190301/2211/model
+python main.py --model data/20190301/2211/model
 ```
