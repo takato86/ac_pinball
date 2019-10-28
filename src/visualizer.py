@@ -3,9 +3,12 @@ import numpy as np
 import pandas as pd
 
 class Visualizer(object):
-    def __init__(self, action_label, option_label):
+    def __init__(self, action_label, option_label=None):
         self.action_label = action_label
-        self.option_label = option_label
+        if option_label is not None:
+            self.option_label = option_label
+        else:
+            self.option_label = [""]
         self.init_action_viz()
         self.init_option_q_vis()
 

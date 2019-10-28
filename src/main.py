@@ -1,6 +1,8 @@
 import argparse
 import time
 import gym
+from datetime import datetime
+import os
 from gym import wrappers, logger
 import numpy as np
 import pandas as pd
@@ -39,31 +41,34 @@ def learning_loop(env_id, episode_count, model, visual):
     max_q_list = []
     max_q_episode_list = []
     max_q = 0.0
+    date = datetime.now().strftime("%Y%m%d")
+    time = datetime.now().strftime("%H%M")
+    saved_dir = os.path.join("data", date, time)
 
     for i in trange(episode_count):
         total_reward = 0
         n_steps = 0
         ob = env.reset()
         action = agent.act(ob)
-        pre_obs = ob
         pre_action = action
         is_render = False
         while True:
             if (i+1) % 20 == 0 and visual:
                 env.render()
-                is_render = True 
+                is_render = True
+            pre_obs = ob
             ob, reward, done, _ = env.step(action)
             n_steps += 1
             rand_basis = np.random.uniform()
             pre_action = action
             action = agent.act(ob)
-            agent.update(pre_obs, pre_action, ob, action, reward, done)
+            agent.update(pre_obs, pre_action, reward, ob, action, done)
             total_reward += reward
-            # tmp_max_q = agent.get_max_q_u(ob, option)
-            # max_q_list.append(tmp_max_q)
-            # max_q = tmp_max_q if tmp_max_q > max_q else max_q
+            tmp_max_q = agent.get_max_q(ob)
+            max_q_list.append(tmp_max_q)
+            max_q = tmp_max_q if tmp_max_q > max_q else max_q
             if done:
-                print("episode: {}, steps: {}, total_reward: {}, max_q_u: {}".format(i, n_steps, total_reward, max_q_list[-1]))
+                print("episode: {}, steps: {}, total_reward: {}, max_q: {}, max_td_error: {}".format(i, n_steps, total_reward, max_q, agent.get_max_td_error()))
                 total_reward_list.append(total_reward)
                 steps_list.append(n_steps)
                 break
@@ -76,10 +81,8 @@ def learning_loop(env_id, episode_count, model, visual):
             # render if asked by env.monitor: it calls env.render('rgb_array') to record video.
             # Video is not recorded every episode, see capped_cubic_video_schedule for details.
         max_q_episode_list.append(max_q)
-
-    date = datetime.now().strftime("%Y%m%d")
-    time = datetime.now().strftime("%H%M")
-    saved_dir = os.path.join("data", date, time)
+        saved_model_dir = os.path.join(saved_dir, 'model')
+        agent.save_model(saved_model_dir, i)
     # export process
     saved_res_dir = os.path.join(saved_dir, 'res')
     export_csv(saved_res_dir, "total_reward.csv", total_reward_list)
@@ -144,7 +147,7 @@ def main():
     parser.add_argument('--nepisodes', default=250, type=int)
     args = parser.parse_args()
     learning_time = time.time()
-    learning_loop(args.env_id, args.nepisodes, args.model, args.vis, args.noptions)
+    learning_loop(args.env_id, args.nepisodes, args.model, args.vis)
         # Close the env and write monitor result info to disk
     duration = time.time() - learning_time
     print("Learning time: {}m {}s".format(int(duration//60), int(duration%60)))

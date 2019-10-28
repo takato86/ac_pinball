@@ -185,11 +185,11 @@ class Option(object):
         """
         intra option policy gradient theorem
         """
-        pi_theta = - self.get_intra_option_dist(feat)
+        pi_theta = self.get_intra_option_dist(feat)
         # TODO check
         pi_theta = pi_theta.reshape(1,len(pi_theta))
         feat = feat.reshape(1,len(feat))
-        grad = np.multiply(pi_theta.T , feat) #温度パラメータは省略
+        grad = - np.multiply(pi_theta.T , feat) #温度パラメータは省略
         feat = feat.reshape(feat.shape[1], )
         grad[a] += feat
         lr_theta = self.lr_theta / np.linalg.norm(feat)
