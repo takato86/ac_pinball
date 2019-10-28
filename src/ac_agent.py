@@ -54,10 +54,13 @@ class Critic(object):
         self.gamma = gamma
         self.lr_q = lr_q
 
-    def update(self, feat, action, reward, next_feat, next_action):
+    def update(self, feat, action, reward, next_feat, next_action, done):
         # Q値の算出はfeatと重みの内積で算出する．
         lr = self.lr_q/np.linalg.norm(feat)
-        td_error = reward + self.gamma * self.value(next_feat, next_action) - self.value(feat, action)
+        update_target = reward
+        if not done:
+            update_target += self.gamma * self.value(next_feat, next_action)
+        td_error = update_target - self.value(feat, action)
         self.w_q[:] += lr * td_error * self.grad(feat, action)
         return td_error
 
@@ -75,7 +78,7 @@ class Critic(object):
 
 
 class ActorCriticAgent(object):
-    def __init__(self, action_space, observation_space, basis_order=3, epsilon=0.01, gamma=0.99, lr_theta=0.001, lr_q=0.001):
+    def __init__(self, action_space, observation_space, basis_order=3, epsilon=0.01, gamma=0.99, lr_theta=0.01, lr_q=0.01):
         self.action_space = action_space
         self.basis_order = basis_order
         self.shape_state = observation_space.shape # case Pinball Box(4,0)
@@ -109,7 +112,7 @@ class ActorCriticAgent(object):
         feat = self.fourier_basis(obs)
         q_value = self.critic.value(pre_feat)
         self.actor.update(pre_feat, pre_a, q_value)
-        error = self.critic.update(pre_feat, pre_a, r, feat, a)
+        error = self.critic.update(pre_feat, pre_a, r, feat, a, done)
         # TODO this is baseline version.
         # q_u_list -= q_omega
         self.max_error = abs(error) if abs(error) > self.max_error else self.max_error
