@@ -57,11 +57,12 @@ def learning_loop(env_id, episode_count, model, visual):
                 env.render()
                 is_render = True
             pre_obs = obs
+            pre_action = action
             obs, reward, done, _ = env.step(action)
             n_steps += 1
-            rand_basis = np.random.uniform()
-            pre_action = action
+            # rand_basis = np.random.uniform()
             action = agent.act(obs)
+            # import pdb; pdb.set_trace()
             agent.update(pre_obs, pre_action, reward, obs, action, done)
             total_reward += reward
             tmp_max_q = agent.get_max_q(obs)

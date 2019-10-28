@@ -20,7 +20,6 @@ class Actor(object):
         
     def update(self, feat, action, q_value):
         lr = self.lr_theta/np.linalg.norm(feat)
-        q_value = q_value.reshape((self.n_actions, 1))
         self.theta += lr * q_value * self.grad(feat, action)
 
     def act(self, feat):
@@ -78,7 +77,7 @@ class Critic(object):
 
 
 class ActorCriticAgent(object):
-    def __init__(self, action_space, observation_space, basis_order=3, epsilon=0.01, gamma=0.99, lr_theta=0.01, lr_q=0.01):
+    def __init__(self, action_space, observation_space, basis_order=3, epsilon=0.01, gamma=0.99, lr_theta=0.001, lr_q=0.001):
         self.action_space = action_space
         self.basis_order = basis_order
         self.shape_state = observation_space.shape # case Pinball Box(4,0)
@@ -110,7 +109,7 @@ class ActorCriticAgent(object):
         """
         pre_feat = self.fourier_basis(pre_obs)
         feat = self.fourier_basis(obs)
-        q_value = self.critic.value(pre_feat)
+        q_value = self.critic.value(pre_feat, pre_a)
         self.actor.update(pre_feat, pre_a, q_value)
         error = self.critic.update(pre_feat, pre_a, r, feat, a, done)
         # TODO this is baseline version.
