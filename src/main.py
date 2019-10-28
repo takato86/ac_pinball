@@ -48,23 +48,23 @@ def learning_loop(env_id, episode_count, model, visual):
     for i in trange(episode_count):
         total_reward = 0
         n_steps = 0
-        ob = env.reset()
-        action = agent.act(ob)
+        obs = env.reset()
+        action = agent.act(obs)
         pre_action = action
         is_render = False
         while True:
             if (i+1) % 20 == 0 and visual:
                 env.render()
                 is_render = True
-            pre_obs = ob
-            ob, reward, done, _ = env.step(action)
+            pre_obs = obs
+            obs, reward, done, _ = env.step(action)
             n_steps += 1
             rand_basis = np.random.uniform()
             pre_action = action
-            action = agent.act(ob)
-            agent.update(pre_obs, pre_action, reward, ob, action, done)
+            action = agent.act(obs)
+            agent.update(pre_obs, pre_action, reward, obs, action, done)
             total_reward += reward
-            tmp_max_q = agent.get_max_q(ob)
+            tmp_max_q = agent.get_max_q(obs)
             max_q_list.append(tmp_max_q)
             max_q = tmp_max_q if tmp_max_q > max_q else max_q
             if done:
@@ -95,8 +95,6 @@ def learning_loop(env_id, episode_count, model, visual):
     print("Average return: {}".format(np.average(total_reward_list)))
 
     # save model
-    saved_model_dir = os.path.join(saved_dir, 'model')
-    agent.save_model(saved_model_dir)
 
     # output graph
     # x = list(range(len(total_reward_list)))

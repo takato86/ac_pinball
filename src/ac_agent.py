@@ -10,7 +10,7 @@ from policy import SoftmaxPolicy
 
 
 class Actor(object):
-    def __init__(self, rng, n_actions, n_features, lr_theta=0.001, temperature=1.0):
+    def __init__(self, rng, n_actions, n_features, lr_theta, temperature=1.0):
         self.rng = rng
         self.n_actions = n_actions
         self.n_features = n_features
@@ -75,7 +75,7 @@ class Critic(object):
 
 
 class ActorCriticAgent(object):
-    def __init__(self, action_space, observation_space, basis_order=3, epsilon=0.01, gamma=0.99, lr_critic=0.01, lr_q=0.01):
+    def __init__(self, action_space, observation_space, basis_order=3, epsilon=0.01, gamma=0.99, lr_theta=0.001, lr_q=0.001):
         self.action_space = action_space
         self.basis_order = basis_order
         self.shape_state = observation_space.shape # case Pinball Box(4,0)
@@ -86,8 +86,7 @@ class ActorCriticAgent(object):
         # parameters
         # Hyper parameters
         self.epsilon = epsilon
-        self.lr_critic = lr_critic
-        self.actor = Actor(self.rng, action_space.n, self.n_features)
+        self.actor = Actor(self.rng, action_space.n, self.n_features, lr_theta)
         self.critic = Critic(action_space.n, self.n_features, gamma, lr_q)
 
         # variables for analysis
@@ -140,8 +139,8 @@ class ActorCriticAgent(object):
             raise Exception('Not suitable model data.')
         
     def _check_model(self, model):
-        if model['w_q_u'].shape != self.w_q_u.shape:
+        if model['w_q'].shape != self.critic.w_q.shape:
             return False
-        if model['w_omega'].shape != self.w_omega.shape:
+        if model['theta'].shape != self.actor.theta.shape:
             return False
         return True
