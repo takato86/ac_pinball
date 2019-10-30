@@ -77,13 +77,13 @@ class Critic(object):
 
 
 class ActorCriticAgent(object):
-    def __init__(self, action_space, observation_space, basis_order=3, epsilon=0.01, gamma=0.99, lr_theta=0.001, lr_q=0.001):
+    def __init__(self, seed, action_space, observation_space, basis_order=3, epsilon=0.01, gamma=0.99, lr_theta=0.001, lr_q=0.001):
         self.action_space = action_space
         self.basis_order = basis_order
         self.shape_state = observation_space.shape # case Pinball Box(4,0)
         self.fourier_basis = FourierBasis(self.shape_state[0], observation_space, order=self.basis_order)
         self.n_features = self.fourier_basis.getNumBasisFunctions()
-        self.rng = np.random.RandomState(seed = 32)
+        self.rng = np.random.RandomState(seed = seed)
 
         # parameters
         # Hyper parameters

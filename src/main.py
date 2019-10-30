@@ -13,6 +13,8 @@ import gym_pinball
 from tqdm import tqdm, trange
 from visualizer import Visualizer
 
+import pandas as pd
+
 
 def export_csv(file_path, file_name, array):
     if not os.path.exists(file_path):
@@ -25,12 +27,13 @@ def moved_average(data, window_size):
     b=np.ones(window_size)/window_size
     return np.convolve(data, b, mode='same')
 
-def learning_loop(env_id, episode_count, model, visual):
+def learning_loop(run, env_id, episode_count, model, visual):
+    print(f"start run {run}")
     env = gym.make(env_id)
     outdir = '/tmp/random-agent-results'
     env = wrappers.Monitor(env, directory=outdir, force=True)
     env.seed(0)
-    agent = ActorCriticAgent(env.action_space, env.observation_space)
+    agent = ActorCriticAgent(run, env.action_space, env.observation_space)
     vis = Visualizer(["ACC_X", "ACC_Y", "DEC_X", "DEC_Y", "NONE"])
     if model:
         agent.load_model(model)
@@ -43,7 +46,7 @@ def learning_loop(env_id, episode_count, model, visual):
     max_q = 0.0
     date = datetime.now().strftime("%Y%m%d")
     time = datetime.now().strftime("%H%M")
-    saved_dir = os.path.join("data", date, time)
+    saved_dir = os.path.join("data", date) #, time
 
     for i in trange(episode_count):
         total_reward = 0
@@ -86,15 +89,16 @@ def learning_loop(env_id, episode_count, model, visual):
         agent.save_model(saved_model_dir, i)
     # export process
     saved_res_dir = os.path.join(saved_dir, 'res')
-    export_csv(saved_res_dir, "total_reward.csv", total_reward_list)
+    export_csv(saved_res_dir, f"total_reward_{run}.csv", total_reward_list)
     td_error_list = agent.td_error_list
     td_error_list_meta = agent.td_error_list_meta
-    export_csv(saved_res_dir, "td_error.csv", td_error_list)
+    export_csv(saved_res_dir, f"td_error_{run}.csv", td_error_list)
     total_reward_list = np.array(total_reward_list)
     steps_list = np.array(steps_list)
     max_q_list = np.array(max_q_list)
     print("Average return: {}".format(np.average(total_reward_list)))
-
+    steps_file_path = os.path.join(saved_res_dir, f"steps_{run}.csv")
+    steps_df = pd.DataFrame(steps_list).to_csv(steps_file_path)
     # save model
 
     # output graph
@@ -144,9 +148,11 @@ def main():
     parser.add_argument('--vis', action='store_true', help='Attach when you want to look visual results.')
     parser.add_argument('--model', help='Input model dir path')
     parser.add_argument('--nepisodes', default=250, type=int)
+    parser.add_argument('--nruns', default=10, type=int)
     args = parser.parse_args()
     learning_time = time.time()
-    learning_loop(args.env_id, args.nepisodes, args.model, args.vis)
+    for run in range(args.nruns):
+        learning_loop(run, args.env_id, args.nepisodes, args.model, args.vis)
         # Close the env and write monitor result info to disk
     duration = time.time() - learning_time
     print("Learning time: {}m {}s".format(int(duration//60), int(duration%60)))
